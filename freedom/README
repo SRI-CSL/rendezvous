@@ -1,0 +1,138 @@
+This README is DEFIANCE/code/rendezvous/freedom/README.
+
+
+Background: A rendezvous protocol lets a user in the censored region
+send and receive a small amount of information (in our case a 5-tuple)
+from the circumvention system to outside the censored region, for the
+purpose of connecting a user to a proxy.  The 5-tuple provides
+sufficient information for the client to engage in the address change
+signaling protocol.
+
+An approach to enabling such a rendezvous service is through volunteer
+websites that implement an apache module extension (called
+mod_freedom) to their webservers.  The module, implemented as an
+extension to Apache's 404 handler, looks for special patterns in GET
+requests that would ordinarily result in 404 responses.  In response,
+the module causes the webserver to respond with an encrypted 5-tuple
+that enables the user to connect to a DEFIANCE proxy through the
+address-change signaling protocol.
+
+The advantage of mod_freedom approach is that it enables us to embed
+rendezvous messages in standard HTTP requests and has the potential to
+provide a large (and unblockable) contact surface of rendezvous
+points.  The initial idea was proposed by the SRI team and a
+proof-of-concept implementation of this was approach was first
+developed by Emily Stark (a student in Dan Boneh's class at Stanford)
+using Identity-Based Encryption.
+
+(See http://crypto.stanford.edu/flashproxy/flashproxy.pdf for more details)
+
+
+
+
+====================================
+
+Here, we present SRI's design for a proof of concept mod_freedom
+module.  Our goal is an implementation that simplifies both management
+and deployment.  In particular, to encourage adoption, we would like
+to minimize the amount of changes to the apache codebase and keep it
+as an independent module that makes minimal changes the host system.
+
+Further, our design must be resilient to adversaries who actively
+install and run mod_freedom servers (anti-harvesting strategies are
+out-of-scope for the current document, but will be considered in the
+broader systems design).
+
+On a server that is configured with a static ErrorDocument, declared by say:
+
+ErrorDocument 404 /missing.html
+
+mod_freedom can be installed to handle this file/location:
+
+LoadModule freedom_module modules/mod_freedom.so
+
+<Location /missing.html>
+   SetHandler freedom
+</Location>
+
+
+It's default behavior is to simply serve that ErrorDocument, unless it
+recognizes the request as being a mod_freedom request, in which case
+it responds appropriately, currently by adding "reply" from a "list"
+onto the end of the document.  It is hoped that this implementation
+can be beefed up to handle a server with any ErrorDocument
+configuration (currently there are four possibilities: a static page; a
+dynamic page; a internal redirect; and an external redirect). But this
+is a good start, since I would expect most error documents are static.
+
+====================================
+
+The design and implementation is determined to some extent by Apache's
+two phase operation: start-up and operational.
+
+At start-up Apache runs with root privileges as a single process,
+single threaded program that reads the configuration (twice), and
+loads the necessary resources.
+
+Once the start-up phase is complete, Apache enters it's operational
+mode in which the initial process serves to manage a pool of worker
+processes or threads. The exact details depend on which MPM
+(Multi-Processing Module) Apache is configured to use (Unix systems
+typically choose between the Prefork and Worker MPM, according to
+their needs). In both cases the master process manages a pool
+of lower-privileged processes that handle connections. In the
+case of the prefork module these are single threaded processes,
+and in the case of the worker MPM they are multi-threaded.
+I should mention there is a third event based MPM that is newer, and
+somewhat specialized.
+
+
+Currently the freedom module loads its list of replies from a file,
+called the Reply List File (RLF), at start-up time.  
+
+
+Each worker
+process obtains a copy via a call to ap_get_module_config.  Since we
+have no control over when the web server gets restarted this design is
+somewhat restrictive.  It would be nice if we could configure the
+running server via a particular HTTP request, such as a post. Lets
+call this the Reply List Update Request, RLUR.
+
+A particular worker process (or thread) would receive and recognize
+the RLUR. It could then update its own copy of the config struct, and
+rewrite the underlying file (assuming it was configured to be able to
+do so). All that would remain would be for the other current and
+future worker processes to update their in memory copies.
+
+This could be done by the server recording the modification time of
+the RL file at start-up (apr_file_info_get). This would be part of the
+freedom_server_config struct.  Each process could then watch for
+changes in the modification time of the RL file, and reload it
+(altering their in memory copy). In the multi-threaded world this
+would need care.
+
+An alternative to this approach would be maintaining the list as
+a shared memory segment.
+
+N.B. Neither design handles an industrial strength website
+where there is more than one server box sitting behind a load balancer.
+
+
+====================================
+
+To build you need apache sources or at least the apache development
+environment.
+
+Questions etc to Ian.
+
+
+====================================
+
+Need to decide on two pieces of crypto.
+
+1. We need to sign (in the DDS) the update request; and
+verify it upon receipt (within mod_freedom).
+
+2. The alice request gets a customed crypto reply. A la
+Phil's latest spiel. This needs to be decided upon.
+

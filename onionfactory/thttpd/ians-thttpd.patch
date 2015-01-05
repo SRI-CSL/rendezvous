@@ -1,0 +1,84 @@
+diff -Naur thttpd-2.25b/config.h thttpd/config.h
+--- thttpd-2.25b/config.h	2005-06-29 10:53:18.000000000 -0700
++++ thttpd/config.h	2012-08-08 15:15:49.310170461 -0700
+@@ -59,7 +59,6 @@
+ */
+ #ifdef notdef
+ /* Some sample patterns.  Allow programs only in one central directory: */
+-#define CGI_PATTERN "/cgi-bin/*"
+ /* Allow programs in a central directory, or anywhere in a trusted
+ ** user's tree: */
+ #define CGI_PATTERN "/cgi-bin/*|/jef/**"
+@@ -69,13 +68,17 @@
+ #define CGI_PATTERN "/*/cgi-bin/*"
+ #endif
+ 
++#define CGI_PATTERN "/index.html"
++
++
++
+ /* CONFIGURE: How many seconds to allow CGI programs to run before killing
+ ** them.  This is in case someone writes a CGI program that goes into an
+ ** infinite loop, or does a massive database lookup that would take hours,
+ ** or whatever.  If you don't want any limit, comment this out, but that's
+ ** probably a really bad idea.
+ */
+-#define CGI_TIMELIMIT 30
++#define CGI_TIMELIMIT 600
+ 
+ /* CONFIGURE: Maximum number of simultaneous CGI programs allowed.
+ ** If this many are already running, then attempts to run more will
+@@ -87,6 +90,9 @@
+ #define CGI_LIMIT 50
+ #endif
+ 
++#define CGI_LIMIT 500
++
++
+ /* CONFIGURE: How many seconds to allow for reading the initial request
+ ** on a new connection.
+ */
+diff -Naur thttpd-2.25b/config.sub thttpd/config.sub
+--- thttpd-2.25b/config.sub	1998-05-08 18:12:58.000000000 -0700
++++ thttpd/config.sub	2012-08-08 15:15:49.310170461 -0700
+@@ -170,7 +170,7 @@
+ 		exit 1
+ 		;;
+ 	# Recognize the basic CPU types with company name.
+-	vax-* | tahoe-* | i[3456]86-* | i860-* | m68k-* | m68000-* | m88k-* \
++	vax-* | tahoe-* | i[3456]86-* | x86_64-* | i860-* | m68k-* | m68000-* | m88k-* \
+ 	      | sparc-* | ns32k-* | fx80-* | arm-* | c[123]* \
+ 	      | mips-* | pyramid-* | tron-* | a29k-* | romp-* | rs6000-* | power-* \
+ 	      | none-* | 580-* | cray2-* | h8300-* | i960-* | xmp-* | ymp-* \
+diff -Naur thttpd-2.25b/extras/htpasswd.c thttpd/extras/htpasswd.c
+--- thttpd-2.25b/extras/htpasswd.c	2001-12-18 16:08:08.000000000 -0800
++++ thttpd/extras/htpasswd.c	2012-08-08 15:15:49.310170461 -0700
+@@ -49,7 +49,7 @@
+     while((line[y++] = line[x++]));
+ }
+ 
+-static int getline(char *s, int n, FILE *f) {
++static int _thttpd_getline(char *s, int n, FILE *f) {
+     register int i=0;
+ 
+     while(1) {
+@@ -189,7 +189,7 @@
+     strcpy(user,argv[2]);
+ 
+     found = 0;
+-    while(!(getline(line,MAX_STRING_LEN,f))) {
++    while(!(_thttpd_getline(line,MAX_STRING_LEN,f))) {
+         if(found || (line[0] == '#') || (!line[0])) {
+             putline(tfp,line);
+             continue;
+diff -Naur thttpd-2.25b/Makefile.in thttpd/Makefile.in
+--- thttpd-2.25b/Makefile.in	2005-06-29 10:52:54.000000000 -0700
++++ thttpd/Makefile.in	2012-08-08 15:16:29.697665737 -0700
+@@ -114,6 +114,7 @@
+ 
+ install-man:
+ 	-mkdir -p $(DESTDIR)$(MANDIR)/man8
++	-mkdir -p $(DESTDIR)$(MANDIR)/man1
+ 	$(INSTALL) -m 444 -o bin -g bin thttpd.8 $(DESTDIR)$(MANDIR)/man8
+ 
+ installsubdirs:

@@ -1,0 +1,102 @@
+ Notes on the "Address Discovery App"  (this file is DEFIANCE/code/rendezvous/app/instructions.txt)
+
+== Setup ==
+
+Prior to launching you should set two environment variables:
+
+DIRSTEGOTORUS    needs to be the full path upto, but not including, the stegotorus executable
+EXESTEGOTORUS    needs to be the name of the stegotorus executable (e.g. obfsproxy)
+
+IPNPORT4STEGOTORUS  this is a demo fail safe; if set (to for example 127.0.0.1:8080) then the app will ignore the final 
+hop result and launch stegotorus this IP and port:
+
+ ./obfsproxy --log-min-severity=debug chop socks 127.0.0.1:1080 $IPNPORT4STEGATORUS x_http2 $IPNPORT4STEGATORUS x_http2
+
+
+
+I use tcsh so my .cshrc contains:
+
+setenv DIRSTEGOTORUS /Users/iam/Repositories/DEFIANCE/stegotorus/
+setenv EXESTEGOTORUS obfsproxy
+
+== Launching == 
+
+Rather than launch double clicking, it is best to launch from the shell since you get to
+see some debug messages and the app inherits your environment settings:
+
+./rendezvous.app/Contents/MacOS/rendezvous
+
+Upon launching the app you will need to enter the name of a server
+running mod_freedom.  Currently vm06.csl.sri.com is the only one I am
+aware of.  The rest should be relatively self explanatory.
+
+
+== Under the Hood ==
+
+The app carries out a treasure hunt consisting, currently, of four web-hops:
+apache, captcha, proof-of-work, and nep, in that order. All but first 
+involve doing a HTTP get request of a URL to a USS, and then processing
+the return redirect in one way or another. Lets look at each in more detail.
+
+=== Apache Hop ===
+
+Upon entering the initial server, the app constructs a request designed
+to trigger the server's mod_freedom's 404 logic. There are two sides
+to this: firstly the resource requested should be not found; while 
+still being a recognizable request. Currently we simply generate a random
+path together with a specific query string. There is much scope here
+for a sophisticated cryptographic protocol.  If successful this query
+returns the next (uss) URL in the treasure hunt, suitably hidden 
+in the HTML of the response.
+
+
+=== Captcha Hop ===
+
+Starting with the URL provided by the previous hop, this is a
+typical, it begins with a get request to the aforementioned URL, which
+is expected to be a redirect. In this case the redirect should be to
+an image, the captcha, which is then displayed by the app. Solving the
+captcha directly leads to the URL of the next hop, which in this case
+needs to be entered into the text field. If at first you don't
+succeed in solving the captcha, you may try, try, try, again.
+
+
+=== Proof of Work Hop ===
+
+Again starting with the URL that ended the previous hop, this
+hop begins with a get request to the aforementioned URL, which
+is expected to be a redirect. In this case we spawn of a browser
+to load the redirect url in the background, but concentrate on the
+actual redirect URL. This URL should contain three base64 blobs
+in it's query string. These are the fixings
+of our proof of work puzzle.
+
+blob[0] is (after base64 decoding) the SHA1 hash of a eight character
+password, all lowercase to keep the search space small and managable.
+
+blob[1] is (after base64 decoding) the encryption of a 256 bit random
+key and 128 bit random iv (initial vector) using the simple password
+hashed on blob[0] and the AES 256 bit CBC block cipher.
+
+blob[2] is (after base64 decoding) the answer to the puzzle (a uss
+URL) encrypted using the key and iv secreted in the previous blob and
+the AES 256 bit CBC block cipher.
+
+The idea behind the design of "Proof-of-work" puzzle is quite simple, 
+the easiest way to solve the puzzle should be a straight forward
+brute force search of the the small search space inherent in the
+first blob.  Solving the puzzle given the password is a easy
+two step process, and yields the next uss URL in the hunt.
+
+=== Nep Hop ===
+
+This is the hop that, hopefully, uncovers the treasure. Like all hops
+it start out with a URL get request to that URL, which is expected to
+be a redirect. As in the proof of work hop, we spawn of a browser to
+load the redirect url in the background, but look for our prize
+secreted as a a base64 blob, again in the redirect URL's query string.
+
+
+
+
+

@@ -1,0 +1,27 @@
+#N.B. We have fixed thttpd so that certain environment variable specified in config.h
+#are inherited by the CGI script that *is* the onion factory.
+#The next step is to make use of these so that they can be removed from defiantconstants.h
+
+#the port that the onionfactory listens on
+DEFIANT_ONIONFACTORY_PORT=7777
+export DEFIANT_ONIONFACTORY_PORT
+
+#the user the ononfactory is going to be running as
+DEFIANT_ONIONFACTORY_USER=iam
+export DEFIANT_ONIONFACTORY_USER 
+
+#if the machine has mail (vm05 doesn't) then restarting will send a email to here
+#DEFIANT_ONIONFACTORY_EMAIL=iam@csl.sri.com
+#export DEFIANT_ONIONFACTORY_EMAIL 
+
+#if running as a tor hidden service we need a bridge for our proxy to connect to
+#DEFIANT_ONIONFACTORY_BRIDGE=127.0.0.1:8888
+#export DEFIANT_ONIONFACTORY_BRIDGE
+
+DEFIANT_CLASSPATH=${HOME}/Repositories/isc/rendezvous/client/tools/captcha/dist/ctool.jar:${HOME}/Repositories/isc/rendezvous/client/tools/captcha/lib/simplecaptcha-1.2.1.jar
+export DEFIANT_CLASSPATH
+
+
+DEFIANT_ONIONFACTORY_NET_URL=http://dgw1.demo.safdef.org/safdef/net-fetcher/
+export DEFIANT_ONIONFACTORY_NET_URL
+

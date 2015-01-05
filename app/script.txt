@@ -1,0 +1,36 @@
+
+Given the name of a mod_freedom server the qt app first chooses a 16
+character secret, and encrypts this secret together with its 32 bit
+crc (cyclic redundancy check) checksum using the Boneh-Franklin IBC
+algorithm with the name of the server being the public key. The app
+then generates a URI for an image on the server that includes this
+encrypted information, and is designed to be unlikely to refer to a
+real image on the site.  This URI is then sent to the server.
+
+When apache processes this request, assuming that it triggers apache's
+404 handler, mod_freedom then takes over. It checks that the request
+does contain a 16 character secret (with the right crc), if this is
+the case then is prepares the reply.
+
+It first chooses a DEFIANCE signed onion from its current inventory.
+It encrypts this onion using the 16 character secret using
+EVP_aes_256_cbc (i.e. 256 bit Rijndael with cipher block
+chaining). The resulting ciphertext is then stegonographically
+embedded in a randomly selected image using outguess and the 16
+character secret, and delivered back to the client.
+
+
+The client uses its established 16 character secret to extract the
+ciphertext from the image, then decrypt it. It then check that the
+DEFIANCE signature is valid. The signature is generated using
+DEFIANCE's private RSA 2048 key and the SHA1 hash of the blob being
+signed. The private key is unknown to both the client and the server.
+
+
+
+
+
+
+
+
+

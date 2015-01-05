@@ -1,0 +1,92 @@
+ServerName vm06.csl.sri.com
+
+LoadModule freedom_module /usr/lib/apache2/modules/mod_freedom.so
+
+
+#######<freedom_module>
+
+
+  FreedomServerFile           mod_freedom_data/onions.bin
+  FreedomKeyPairFile          mod_freedom_data/vm06_private_key.bin
+  FreedomImageDirectory       mod_freedom_data/images
+
+#these are the VM06 tor hidden service settings
+#  FreedomTorHiddenService     http://eplycb5spmuue33s.onion/index.html?query=true
+#  FreedomTorProxyAddress      127.0.0.1
+#  FreedomTorProxyPort         9060
+#  FreedomTorProxyProtocol     6
+
+#this is a direct localhost call to the onionfactory (i.e. thttpd listening on port 7777)
+  FreedomTorHiddenService     http://127.0.0.1:7777/index.html?query=true
+
+  FreedomUpdateInterval       86400
+# e.g. 
+# the default (i.e. no setting) is 24 hours
+# 86400  24 hours
+# 3600    1 hour
+# 60      1 minute
+ 
+  <Location /error.html>
+     SetHandler freedom
+  </Location>
+
+######></freedom_module>
+
+
+<VirtualHost *:80>
+	ServerAdmin ian.mason@sri.com
+
+	DocumentRoot /var/www
+	<Directory />
+		Options FollowSymLinks
+		AllowOverride None
+	</Directory>
+	<Directory /var/www/>
+		Options Indexes FollowSymLinks MultiViews
+		AllowOverride None
+		Order allow,deny
+		allow from all
+	</Directory>
+
+	ErrorLog ${APACHE_LOG_DIR}/error.log
+
+	LogLevel warn
+
+	CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+    ErrorDocument 404 /error.html
+
+
+
+</VirtualHost>
+
+<VirtualHost *:443>
+	ServerAdmin ian.mason@sri.com
+
+	DocumentRoot /var/www
+	<Directory />
+		Options FollowSymLinks
+		AllowOverride None
+	</Directory>
+	<Directory /var/www/>
+		Options Indexes FollowSymLinks MultiViews
+		AllowOverride None
+		Order allow,deny
+		allow from all
+	</Directory>
+
+  SSLEngine on    
+  SSLCertificateFile /etc/apache2/ssl.crt/server.crt
+  SSLCertificateKeyFile /etc/apache2/ssl.key/server.key
+  SetEnvIf User-Agent ".*MSIE.*" nokeepalive ssl-unclean-shutdown
+  CustomLog ${APACHE_LOG_DIR}/error.log "%t %h %{SSL_PROTOCOL}x %{SSL_CIPHER}x \"%r\" %b"
+
+	ErrorLog ${APACHE_LOG_DIR}/error.log
+
+	LogLevel warn
+
+	CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+  ErrorDocument 404 /error.html
+
+</VirtualHost>

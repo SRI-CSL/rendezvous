@@ -1,0 +1,46 @@
+This widget is built using Qt 4.7 (c.f. http://qt.nokia.com)
+
+To generate Makefile:
+
+$> qmake
+
+To build:
+
+$> make
+
+To run:
+
+$> ./rendezvous.app/Contents/MacOS/rendezvous
+
+N.B. It currently needs some environment variables (your values will vary):
+
+setenv DIRSTEGOTORUS       /Users/iam/Repositories/isc/stegotorus/   
+setenv EXESTEGOTORUS       stegotorus
+setenv ISCDANCEREXE        /Users/iam/Repositories/isc/addresspools/src/acs-dancer
+
+and there is also a cheat, if you set:
+
+setenv IPNPORT4STEGOTORUS  127.0.0.1:8080
+
+then the steg client connects to a steg server on IPNPORT4STEGOTORUS like so:
+
+DIRSTEGOTORUS/EXESTEGOTORUS --log-min-severity=warn chop socks 127.0.0.1:1080 [IPNPORT4STEGOTORUS http]^4
+
+
+Or launch the app by double clicking on it...
+
+
+To make a deployable thingy that has all the stuff buried in the app bundle:
+
+After the build:
+
+$>macdeployqt rendezvous.app
+
+
+To valgrind:
+
+$>valgrind --leak-check=yes  --dsymutil=yes ./rendezvous.app/Contents/MacOS/rendezvous
+
+for a full list of leaks:
+
+$>valgrind --leak-check=full  --dsymutil=yes ./rendezvous.app/Contents/MacOS/rendezvous

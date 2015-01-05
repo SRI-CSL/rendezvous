@@ -1,0 +1,26 @@
+
+#private.pem contains both the private key and the public key
+openssl genrsa -out private.pem 2048
+
+#to extract out the public key:
+openssl rsa -in private.pem -out public.pem -outform PEM -pubout
+
+======================================================================
+
+One set of keys currently:
+
+Set one:  The Defiance Pair
+
+   defiant_private.pem
+   defiant_public.pem
+
+These are the DEFIANCE keys. They are ONLY used for signing
+and verifying ONIONS. Thus the client is configured
+to contain ONLY the public.pem which it uses to verify onions served
+by mod_freedom. In addition mod_freedom is configured to contain ONLY
+the public.pem which it uses to verify onions that are delivered to it 
+by the Defiance Discovery Provisioning Server. Only
+the  Defiance Discovery Provisioning Server is configured to 
+contain the private key.
+
+

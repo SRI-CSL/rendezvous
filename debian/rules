@@ -1,0 +1,45 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_install:
+	#mkdir -p debian/saferdefiance-client/usr/bin/
+	#cp client/src/defiantclient debian/saferdefiance-client/usr/bin/defiantclient
+
+	# mod_freedom
+	mkdir -p debian/saferdefiance-mod-freedom/usr/sbin/
+	cp client/src/tools/defiantpkg_generator debian/saferdefiance-mod-freedom/usr/sbin/
+	mkdir -p debian/saferdefiance-mod-freedom/usr/share/mod_freedom/
+	cp freedom/onions.bin debian/saferdefiance-mod-freedom/usr/share/mod_freedom/
+	cp client/data/defiantmasterkey.bin debian/saferdefiance-mod-freedom/usr/share/mod_freedom/
+	mkdir -p debian/saferdefiance-mod-freedom`apxs2 -q LIBEXECDIR`
+	cp freedom/.libs/mod_freedom.so debian/saferdefiance-mod-freedom`apxs2 -q LIBEXECDIR`
+	mkdir -p debian/saferdefiance-mod-freedom`apxs2 -q SYSCONFDIR`/mods-available/
+	cp debian/saferdefiance-mod-freedom.conf/freedom.load debian/saferdefiance-mod-freedom`apxs2 -q SYSCONFDIR`/mods-available/
+	cp debian/saferdefiance-mod-freedom.conf/freedom.conf debian/saferdefiance-mod-freedom`apxs2 -q SYSCONFDIR`/mods-available/
+	mkdir -p debian/saferdefiance-mod-freedom/usr/share/mod_freedom/images/
+	cp -r freedom/images/*.jpg debian/saferdefiance-mod-freedom/usr/share/mod_freedom/images/
+
+	# Onion Factory
+	mkdir -p debian/saferdefiance-onion-factory/usr/share/onion-factory/sql/
+	cp onionfactory/mysql/create.sql onionfactory/mysql/server.sql debian/saferdefiance-onion-factory/usr/share/onion-factory/sql/
+	# The CGI and www portions
+	mkdir -p debian/saferdefiance-onion-factory/var/www/images
+	cp onionfactory/server/index.html debian/saferdefiance-onion-factory/var/www/index.html
+
+	# Restart and key util
+	mkdir -p debian/saferdefiance-onion-factory/usr/bin/
+	cp onionfactory/bin/restart_onionfactory.sh debian/saferdefiance-onion-factory/usr/bin/
+	cp client/src/tools/defiantpkg_sql debian/saferdefiance-onion-factory/usr/bin/
+
+	# Jar files
+	mkdir -p debian/saferdefiance-onion-factory/usr/share/onion-factory/
+	cp client/tools/captcha/dist/ctool.jar client/tools/captcha/lib/simplecaptcha-1.2.1.jar debian/saferdefiance-onion-factory/usr/share/onion-factory/
+
+	# Wedge
+	mkdir -p debian/saferdefiance-wedge/usr/bin/
+	cp wedge/bin/wedge wedge/bin/unwedge debian/saferdefiance-wedge/usr/bin/
+
+override_dh_auto_test:
+

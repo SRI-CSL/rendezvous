@@ -1,0 +1,149 @@
+Subject:
+Re: [DEFIANCE] DEFIANCE rendezvous design
+From:
+Jeroen Massar <jeroen@unfix.org>
+Date:
+1/23/12 9:16 AM
+To:
+Vinod Yegneswaran <vinod@csl.sri.com>
+CC:
+<defiance@csl.sri.com>
+
+On 2012-01-18 20:43 , Vinod Yegneswaran wrote:
+> > All,
+> > 
+> > We are in the process of writing up a design document for the 
+> > DEFIANCE rendezvous design.  This is an early draft, but would like 
+> > some feedback, especially from any Apache development experts who 
+> > might be on the list.
+
+See below for my comments on the document, I've email-style quoted from
+the given text. Hopefully these comments are beneficial to you.
+
+[..]
+> > Background: A rendezvous protocol lets a user in the censored region
+> >  send and receive a small amount of information (in our case a 
+> > 5-tuple) from the circumvention system to outside the censored 
+> > region, for the purpose of connecting a user to a proxy.
+
+Maybe it would be better to write that it is a system outside, like:
+"from the circumvention system to A SYSTEM outside the ..." ?
+
+> > The 5-tuple provides sufficient information for the client to engage
+> >  in the address change signaling protocol.
+
+In our Big Picture we have named this "Discovery Provisioning
+(Details)". That allows us to change it into a 4 or 6-tuple if we ever
+need to add or remove details.
+
+
+> > An approach to enabling such a rendezvous service is through volunteer
+> > websites that implement an apache module extensión (called
+> > mod_freedom)
+
+Note that the word "extension" has a accent acute on the 'o'.
+
+I would also replace "implement" with "administer and operate".
+
+[..]
+> > (See http://crypto.stanford.edu/flashproxy/flashproxy.pdf for more
+> > details)
+
+A side-comment: how well does this behave behind NAT / firewall?
+
+Thus, if the client with the FlashProxy is behind a NAT or a firewall
+and thus cannot have incoming connections due to the NAT or policy in
+the network or on the host?
+
+
+Another issue I see there is that those ports are "custom", that-is, not
+port 80 or something else a typical user would have, next to the
+knowledge that most DSL/cable/enduser-type IP addresses don't have a
+webserver running in the first place. As such it would give off a very
+big signal if the adversary has a simple list like the MAPS DUL which
+marks address space as being 'enduser', as then it is unlikely that such
+a host is used as a normal server and would thus give off a fingerprint too.
+
+[..]
+
+> > On a server that is configured with a static ErrorDocument, declared
+> > by say:
+> > 
+> > ErrorDocument 404 /missing.html
+> > 
+> > mod_freedom can be installed to handle this file/location:
+> > 
+> > LoadModule freedom_module modules/mod_freedom.so
+> > 
+> > <Location /missing.html>
+> > SetHandler freedom
+> > </Location>
+
+I think one can avoid these configurations and not use a
+ErrorDocument/SetHandler combination by inserting a last-order filter
+module with APR_HOOK_REALLY_LAST. This avoids that one would have to
+handle various kinds of error types.
+
+A filter set up that way would be triggered after every other module etc
+has already output their page and then it could then check the
+already-set error-code if that is a 404 and append it's short amount of
+text that it wanted to add.
+
+In the case of our mod_dgw we chose to do it the other way around, as we
+are 'stealing' requests instead of appending data to it, as such we use
+APR_HOOK_FIRST and abort the request when we are done with it.
+
+
+On another note, as mod_freedom outputs a couple of 'extra' lines to the
+end of a 404 page I think it would be wise to always have the same
+length of a 404 page, especially when that page is static. Thus instead
+of the extra magic lines one could append some 'debug details' or
+similar to it when it is not a mod_freedom call. That way, if a
+adversary is logging HTTP it would see that 404 pages from this site are
+always the same length which would be less suspicious than having a
+"static" 404 page with differing length.
+
+Note that with nginx one could use something similar to
+"proxy_intercept_errors on" to change the actual output of the page,
+this is similar to what one would need for mod_freedom.
+
+[..]
+> > Each worker process obtains a copy via a call to 
+> > ap_get_module_config. Since we have no control over when the web
+> > server gets restarted this design is somewhat restrictive.  It would
+> > be nice if we could configure the running server via a particular
+> > HTTP request, such as a post. Lets call this the Reply
+> > List Update Request, RLUR.
+
+We also ran into a similar issue and decided that the best thing to do
+was to remove any kind of logic from mod_dgw and have the logic in a
+separate daemon. Especially as our daemon is interacting with a local
+PGSQL database for long-term storage of addresspool details.
+
+Our mod_dgw keeps a (tcp) connection per child open to dgw. The big
+advantage for operators is then also that in case the daemon diesthat
+mod_dgw cannot contact it and just keeps on processing without
+interrupting any operation of the main webserver process.
+
+Another advantage of mod_dgw is also the minimal amount of code
+which thus is easily reviewed for security holes.
+
+>From a development point of view that also makes it much easier to debug
+as one does not have to worry about Apache anymore and one can just gdb
+the daemon binary.
+
+As such, I would suggest that you have a peek at our mod_dgw and
+possibly use a similar separation of apache and actual logic.
+
+For mod_dgw we effectively do a http-proxy, but allow dgw to send back
+special actions that need to be performed inside Apache (skipping the
+other modules etc), this could easily be interfaced also with other
+webservers. Apache was always the #1 but nginx is really catching on a
+lot lately thus having Defiance run on as many platforms as possible is
+likely a good plan.
+
+If you want to discuss this setup in more detail we can do this during
+the call and/or offline on this list etc.
+
+Greets,
+ Jeroen

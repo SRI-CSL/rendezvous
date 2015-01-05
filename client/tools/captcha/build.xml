@@ -1,0 +1,62 @@
+<project name="CTool" default="jar" basedir=".">
+  <property name="src" location="src"/>
+  <property name="lib" location="lib"/>
+  <property name="build" location="build"/>
+  <property name="dist"  location="dist"/>
+  <property name="package" value="ctool"/>
+
+  <path id="classpath">
+     <pathelement location="${lib}/simplecaptcha-1.2.1.jar"/> 
+  </path>
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${build}"/>
+  </target>
+
+  <target name="compile" depends="init">
+    <!-- Compile the java code from ${src} into ${build} -->
+    <javac srcdir="${src}" destdir="${build}"
+           classpathref="classpath"
+           includeantruntime="false"/>
+  </target>
+
+
+
+  <target name="jar" depends="compile">
+    <mkdir dir="${dist}/lib"/>
+    <jar jarfile="${dist}/${package}.jar" basedir="${build}"/>
+  </target>
+
+
+    <target name="run0"  depends="jar">
+      <java classname="CTool" fork="true">
+        <classpath>
+          <pathelement location="${dist}/${package}.jar"/>
+          <pathelement location="${lib}/simplecaptcha-1.2.1.jar"/> 
+        </classpath>
+      </java>
+    </target>
+
+    <target name="run"  depends="jar">
+      <java classname="Pinger" fork="true">
+        <classpath>
+          <pathelement location="${dist}/${package}.jar"/>
+          <pathelement location="${lib}/simplecaptcha-1.2.1.jar"/> 
+        </classpath>
+        <arg value="true"/>
+        <arg value="3xTyki98kKlo0PqwHhG"/>
+        <arg value="test.png"/>
+      </java>
+    </target>
+
+
+  <target name="clean">
+    <!-- Delete the ${build} and ${dist} directory trees -->
+    <delete dir="${build}"/>
+    <delete dir="${dist}"/>
+  </target>
+
+</project>

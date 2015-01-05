@@ -1,0 +1,11 @@
+use onionfactory;
+
+INSERT into key_pair (public_key, Qid, Did) VALUES 
+("vm06.csl.sri.com", 
+ "LiBHlnvLDszzqJ94tG28wjncyveLm/rAe6M7vWxGoN/zOpHUP3mwolpEG+Y2IWFRLc5VOfXCUnGrwpCh8CovzFsZdwExwMIOhUyadLHo0Ea9e8oI2AjB6ZDTc94C3pZ1MnckQ6eVpA0EvmSV0lpC66/ccjwubHBn0iuVGkz1QVoB", 
+ "J25KlxQ2FYue6srHPi9UJXo4PTlU1ZN5OEglFfelEmJw+KwUbzcPnoV7UxVEERD8ZqzkWPx/jYXhYfh2eJLRp7bwDf9d0SY/s5Qi11mYIptdT/U/aGS90VHE42xY5ZRAoiEpd1P4DHj+NwOBVQxodoJARox4IwDzQrdoBUahVQwA"),
+("vm05.csl.sri.com", 
+ "HVy4Dkkf403r3HYNIrt7CJtVRNiwglvYm45JwwD+1yN5t4BqJ9PTixNISdOid3kWDXA2HKfICqQt0qhagH4T3FaonpJfyuu3SwJrYd9nNu8b8mzfljwrEmKIugEoLzwPhJ7SJBDQPNfh0TUC3knAPgGF6xIOYWkDS9wO2Oi9hcwB",
+ "JAbCmBCJ4j0bF24ZdM0bwZfvEJJY3ixJDDIgj+HIOXmeZN6/oniJc4YM0Yz8v8daB9Xix6SnOGXVefyXdutSXiUaSSgV7jSwk9p9mieDFlUzuLotz3ggeS7C0oooAZzfygo+QAFWaNdeKq81QkBQt6k17dukGmfsvcCYNJhRdlAB");
+
+

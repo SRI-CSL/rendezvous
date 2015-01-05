@@ -1,0 +1,1 @@
+LoadModule freedom_module /usr/lib/apache2/modules/mod_freedom.so

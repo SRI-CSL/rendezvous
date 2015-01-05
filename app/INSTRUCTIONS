@@ -1,0 +1,21 @@
+To run:
+
+$> ./rendezvous.app/Contents/MacOS/rendezvous
+
+N.B. It currently needs some environment variables (your values will vary):
+
+setenv DIRSTEGOTORUS       /Users/iam/Repositories/isc/stegotorus/   
+setenv EXESTEGOTORUS       stegotorus
+setenv ISCDANCEREXE        /Users/iam/Repositories/isc/addresspools/src/acs-dancer
+
+and there is also a cheat, if you set:
+
+setenv IPNPORT4STEGOTORUS  127.0.0.1:8080
+
+then the steg client connects to a steg server on IPNPORT4STEGOTORUS like so:
+
+DIRSTEGOTORUS/EXESTEGOTORUS --log-min-severity=warn chop socks 127.0.0.1:1080 [IPNPORT4STEGOTORUS http]^4
+
+
+Or launch the app by double clicking on it... but then the debug
+messages goto /dev/null which can be a bit uninformative.

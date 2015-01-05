@@ -1,0 +1,37 @@
+Subject:
+[DEFIANCE-DEVEL] Addresspools Demo host
+From:
+Jeroen Massar <jeroen@unfix.org>
+Date:
+4/2/12 7:49 AM
+To:
+<defiance-devel@csl.sri.com>
+
+Hi,
+
+Under *.demo.safdef.isc.org there are a couple of hosts:
+
+lnxddbp
+lnxddbs
+lnxdgw
+
+That together make up a demo environment, as they are running their
+respective components.
+
+At:
+ http://lnxdgw.demo.safdef.isc.org/safdef/netblock/list/
+
+you can find a simple webinterface where one can see which netblocks are
+currently live on that host.
+
+Under http://lnxdgw.demo.safdef.isc.org/safdef/net-fetcher/ one can then request
+"Discovery Provisioning Details" (or NEP as it is called in the paper).
+
+Cut those lines in a file and then on a host where you compiled the
+addresspools code on, you should be able to use the ACS dancer
+(acs-dancer) to do a "acs-dancer filename.net" to do the ACS dance of the
+DEFIANCE framework, which will result in the details for the bridge.
+
+Greets,
+ Jeroen
+

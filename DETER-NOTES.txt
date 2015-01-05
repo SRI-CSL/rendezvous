@@ -1,0 +1,378 @@
+This note describes how to install and configure mod_freedom and the
+onionfactory.  Since this is the first time this has been done on
+DETER we will keep the configuration as simple as possible. Thus I
+suggest that mod_freedom and the onion_factory all run on the same
+machine, eliminating the need for a tor hidden service. To keep things
+even simpler, perhaps this machine should be the same as the one
+running the tor bridge (akin to the VM06 and VM05 configurations).
+
+Comments?
+
+
+Checkout the required repository (or perhaps unzip/untar a copy of it):
+
+>mkdir -p Repositiories/isc
+>cd Repositiories/isc
+>git clone https://git.safdef.isc.org/git/rendezvous/
+
+(n.b. required fetching my .netrc and .gitconfig from VM06)
+
+Prerequisites:
+
+0. Install the needed packages 
+
+stuff for mod_freedom:
+
+> sudo apt-get install apache2 apache2-prefork-dev libapr1-dev libaprutil1 libaprutil1-dev libtool libwww-perl 
+
+stuff for pbc (Stanford's *Pairings Based Crypto*) and curl
+
+>  sudo apt-get install libgmp-dev libcurl4-gnutls-dev 
+
+stuff for java (needed for captcha generation)
+>  sudo apt-get install ant
+
+We'll need a java too, but lets look into that later, because I'd like to see if I
+can avoid oracle's java. Alas it is already on VM05.
+
+Make sure apache is working, for example:
+
+>curl http://127.0.0.1
+
+The onionfactory uses mysql so we need to install that and set the root password.
+
+>sudo apt-get install mysql-server mysql-client
+
+The root password for vm05 is mysql4vm05@sri
+The root password for vm06 is mysql4vm05@sri
+
+It might be nice to add the password to the file:
+
+${REPOSITORIES}/isc/rendezvous/onionfactory/mysql/notes.txt
+
+for prosperity.
+
+
+mkdir -p ~/Software
+cd Software
+
+1. thttpd: 
+
+>wget http://acme.com/software/thttpd/thttpd-2.25b.tar.gz
+>gunzip thttpd-2.25b.tar.gz
+>tar xvf thttpd-2.25b.tar
+>cd thttpd-2.25b
+>patch -p1 < ${REPOSITORIES}/isc/rendezvous/onionfactory/thttpd/ians-thttpd.patch 
+
+[See the onionfactory instructions below; but for the time being don't build it yet.]
+
+
+2. Pairings Based Cryptography. Install the Stanford Library:
+
+>wget http://crypto.stanford.edu/pbc/files/pbc-0.5.12.tar.gz
+>gunzip pbc-0.5.12.tar.gz
+>tar xvf pbc-0.5.12.tar
+>./configure
+>make
+>sudo make install
+
+
+Ingredients:
+
+client library (not a separate component, nor built separately but mostly compiled in for security reasons;
+though a set of tools and tests gets built, and some of these you'll need to use)
+
+mod_freedom (an apache module, thus requires a running apache)
+
+onion_factory (thttpd running locally and handling requests via a cgi script called index.html)
+
+tor (if the onion_factory is going to be accessed by a tor hidden service, then you'll need to 
+configure this. for deter this might be making work for ourselves, we could just as easily
+access it locally, I'll try and describe both ways, the easiest first.)
+
+
+Requirements:
+
+
+Before we go into the gory details of the installation process,
+lets check that the important parts build OK.
+
+0.  Make sure ${REPOSITORIES}/isc/rendezvous/client/tools/captcha builds:
+
+>cd ${REPOSITORIES}/isc/rendezvous/client/tools/captcha
+>ant
+
+
+1. Make sure ${REPOSITORIES}/isc/rendezvous/client/src builds:
+
+>cd ${REPOSITORIES}/isc/rendezvous/client/src
+>make
+
+
+2. Make sure ${REPOSITORIES}/isc/rendezvous/freedom builds:
+
+>cd ${REPOSITORIES}/isc/rendezvous/freedom
+>make
+
+3. Make sure ${REPOSITORIES}/isc/rendezvous/onionfactory/server builds:
+
+>cd ${REPOSITORIES}/isc/rendezvous/onionfactory/server
+>make
+
+
+Now we actually need to deploy the DEFIANCE software.
+
+=========  The Apache module mod_freedom configuration guide ====================
+
+On vm05 and vm06 I make use of the fact that
+
+>hostname 
+
+returns "vm05" or "vm06", on yours lets say it returns ${HOST}. We'll use this
+for naming some files etc. Note that this is not the full hostname, which
+is also important, being the public key of mod_freedom.
+
+The module mod_freedom is deployable via a make command, once we have 
+all the ingredients ready. Apart from the tor hidden service
+which we will leave for later. To configure mod_freedom we need two things:
+
+0 a. A private key for the server.
+
+DEFIANCE uses Identity Based Encryption and Stanford's Pairings
+Based Cryptography, the main feature being the mod-freedom's
+PUBLIC KEY is it's HOSTNAME. So I hope you have that ready.
+I'm going to describe the process for:
+
+vm05.csl.sri.com
+
+Assuming that the client/src/tools built ok:
+
+>cd ${REPOSITORIES}/isc/rendezvous/client/src/tools
+>./defiantpkg_generator 
+Usage: ./defiantpkg_generator <masterkeyfile> <host url> <outputfile>
+>./defiantpkg_generator ../../data/defiantmasterkey.bin vm05.csl.sri.com vm05_private_key.bin
+
+creates the file vm05_private_key.bin with the desired thing. 
+If you are curious you can look at it:
+
+>./defiantpkg_info vm05_private_key.bin 
+
+key_pair->public_key = vm05.csl.sri.com
+key_pair->Qid = <a point on an elliptic curve>
+key_pair->Did = <a point on an elliptic curve>
+
+You should call yours ${HOST}_private_key.bin where ${HOST} is whatever 
+hostname returns (hopefully something short).
+
+It is a good idea to be careful with these things. A good place to commit the
+file is in:
+
+${REPOSITORIES}/isc/rendezvous/client/data
+
+I committed the one I generated above. We will need this key at least twice.
+
+
+0 b. An apache config file.
+
+
+In ${REPOSITORIES}/isc/rendezvous/freedom you can see vm06's config file:
+
+vm06_config
+
+you should copy it to ${HOST}_config. Now edit it.
+You will need to change the name of the keypair file, at least. The tor hidden service
+stuff will need to be changed too, but for the time being can be left as is.
+
+Add a link to your key file like the ones that are
+already in ${REPOSITORIES}/isc/rendezvous/freedom.
+
+edit the Makefile so that
+the two lines at the top refer to your files. To install 
+
+>make ubuntu
+
+and be prepared to enter your credentials.  The installation comes with 
+a preloaded set of onions, which should work until they become stale
+(after FreedomUpdateInterval seconds from when the module was installed).
+
+To test if you installation is working (make sure client/src has been built)
+
+>cd ${REPOSITORIES}/isc/rendezvous/freedom/test
+> ./get_image.pl 
+Usage: ./get_image.pl <server> <imagefile>
+>./get_image.pl vm05.csl.sri.com foo.png
+
+should fetch an onion, write it out to the local file foo.png, and then verify it. 
+Note that this just verifies the outer signature, to actually unwrap the 
+beast you'd have to solve the captcha etc. This is what the qt app does.
+
+
+=========  The Onionfactory configuration guide ====================
+
+The onionfactory is indepedent of mod_freedom, though the latter relies
+on it for a supply of onions, once it's installed batch becomes stale.
+
+We need to choose a location to install the onion factory (qua thttpd),
+and its accoutrements (we need to have it restart automatically like
+apache2, so there are scripts for that as well, which need to be pointed
+to in an init file.) We also need to run it as a user other than root.
+The one on VM06 runs as me, but it might be better down the track
+if we actually add a user just for this, but then they would have to 
+check out the repository etc. Sigh. So lets just install it as whoever is
+following these instructions. Linda or Ian I guess.
+
+So in what follows I am going to assume:
+
+0. We are ${USER} and we are going to install into ${HOME}/OnionFactory
+
+1. We are going to run the onionfactory on port 7777
+
+Presumably this onionfactory is running on the same machine as the mod_freedom server
+it is going to serve, so I will also assume that we have a running mod_freedom
+instance (we'll need its keys later). 
+
+Installation and Configuration.
+
+Step 0.  Build thttpd. You may have done the steps maked [skip] above.
+
+[skip]>cd ~/Software
+[skip]>wget http://acme.com/software/thttpd/thttpd-2.25b.tar.gz
+[skip]>gunzip thttpd-2.25b.tar.gz
+[skip]>tar xvf thttpd-2.25b.tar
+[skip]>cd thttpd-2.25b
+[skip]>patch -p1 < ${REPOSITORIES}/isc/rendezvous/onionfactory/thttpd/ians-thttpd.patch 
+
+
+
+>./configure --prefix=${HOME}/OnionFactory/thttpd
+>make
+>sudo make install
+>sudo chown -R ${USER}:${USER} ${HOME}/OnionFactory/
+or
+>sudo chown -R ${USER}:www ${HOME}/OnionFactory/
+
+If the install complains about the www group, just make it:
+
+>sudo groupadd www
+
+Since its just a temporary setting.
+
+Don't bother testing it yet, we'll do that at the end.
+
+Step 2. Make the cgi stuff:
+
+>cd ${REPOSITORIES}/isc/rendezvous/onionfactory/server
+>make
+>make install
+
+Step 3. Build the mysql stuff
+
+Firstly, using the tool ${REPOSITORIES}/isc/rendezvous/onionfactory/client/src/tools/defiantpkg_sql,
+add your server's key to the file 
+
+${REPOSITORIES}/isc/rendezvous/onionfactory/mysql/keys.sql
+
+(this part of the process will/should eventually be replaced by some sort of registration process,
+since one of the roles of the onionfactory is as the private key generator, PKG, for all mod_freedoms).
+
+>cd ${REPOSITORIES}/isc/rendezvous/onionfactory/mysql/
+>mysql -u root -p 
+>mysql> source create.sql
+>mysql> source server.sql
+>mysql> source keys.sql 
+>mysql> exit
+
+Step 4. Captcha Generation and NET fetching
+
+The client/src code base needs to know the hardwired location of the jars needed for captcha generation.
+It also needs an address (ISC site) for where to get NETs (Network Entry Tickets, the core of onions).
+Since ISC has been unreliable, and may not be up in DETER, there is a mode for "faking" them.
+
+We can't do these using environment variables because the onionfactory runs as a CGI script that does
+not inherit the thttpd environment. Sooooooo:
+
+Edit 
+
+
+${REPOSITORIES}/isc/rendezvous/client/src/defiantconstants.h 
+
+so that:
+
+
+DEFIANT_ONIONFACTORY_NET_URL  is the empty string "" or the url of the ISC provider in DETER (likely the former)
+
+DEFIANT_CLASSPATH is the classpath consisting of the two jars generated by ant from the directory:
+
+${REPOSITORIES}/isc/rendezvous/client/tools/captcha
+
+Recompile the client stuff and test it:
+
+>nep_test ...
+
+and 
+
+>captcha_test ...
+
+both in 
+
+
+${REPOSITORIES}/isc/rendezvous/client/src/tests
+
+
+Step 5. The fiddly stuff  
+
+A. In the file 
+
+${REPOSITORIES}/isc/rendezvous/ENVIROMENT_VARIABLES
+
+you will find four environment variables (bash syntax), only the first two need to be set 
+for this current configuration to work.
+
+If these variables are set in the .bash_profile or whatever,  then
+
+${HOME}/OnionFactory/bin/restart_onionfactory.sh
+
+should work smoothly.
+
+Since we are not, at this stage running as a tor hidden service we don't really need a bridge address,
+and my guess is setting up mail in DETER would be a nightmare, so no email.
+
+B. Copy the file 
+
+${REPOSITORIES}/isc/rendezvous/onionfactory/bin/rc.local
+
+to 
+
+/etc/local
+
+and **edit** it so that it points to the right location and runs as
+the right user. 
+
+Step 5. Start it.
+
+>cd ${HOME}/OnionFactory/bin/
+>./restart_onionfactory.sh 
+
+(on vm05 there was no /usr/bin/mail)
+
+
+Step 6. Testing and Debugging the OnionFactory
+
+The onionserver CGI script logs to:
+
+${HOME}/OnionFactory/thttpd/log/onionserver.log
+
+The thttpd server itself logs to:
+
+${HOME}/OnionFactory/thttpd/log/thttpd.log
+
+To test it:
+
+>./test_onion_server <path to private key (mod_freedom's)>  7777
+
+Usually when it fails its because either it can't make images or it can't get
+neps. The logfile usually gives hints as to which is the culprit.
+
+
+
+

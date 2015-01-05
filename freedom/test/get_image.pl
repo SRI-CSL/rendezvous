@@ -1,0 +1,1 @@
+../../client/src/tools/get_image.pl

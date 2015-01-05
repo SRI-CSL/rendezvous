@@ -1,0 +1,82 @@
+Mostly notes to self.
+
+test url:
+
+http://vm06.csl.sri.com/husbandry.png?id=67549921409012
+
+
+
+====================
+
+Next steps: 
+
+play nice and fair with other modules, this may require some work, and experimentation.
+AddHandler rather than SetHandler? DECLINE rather than handle in the default case? 
+configuration & persistence
+function?
+
+
+====================
+
+Design desiderata:
+
+Nice customizable behavior.
+General and extensible.
+Capable of reporting to defiance servers.
+Supports multimodes of contact.
+
+
+======================
+
+Notes to self:
+
+ErrorDocument can be set in the context of a server, virtual host, directory, or  .htaccess 
+So I suppose the SetHandler can also be called in such a context, so we should handle
+both server and directory configuration directives if we implement any at all, that is.
+
+
+=======================
+
+Minimal requirements for a early November demo.
+
+need to configure:
+
+a server to get the list of replies
+
+somewhere to store the replies
+
+OR MORE SIMPLY  just a list of replies.
+
+what makes a 404 a defiance request?
+
+anything else to make the backend bit securable?
+
+=========================
+
+crypto sketch from Vinod
+
+
+client   --------  (symmetric key | payload) encrypted with server's public key  ------> server
+
+
+server ------- ((secret) signed by defiance public key) encrypted by symmetric key
+
+
+how does the client get the server's public key?
+
+how does the server load data such as keys? See what mod_ssl does, and where it looks for
+certificates etc.
+
+=========================
+
+Version 2.0 check list.
+
+Must test in prefork and worker. So need to handle locks.
+
+Need to build the infrastructure to send a new list.
+
+Need to do crypto on BOTH types of requests.
+
+Need to generate defiance keys
+
+

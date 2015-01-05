@@ -1,0 +1,6 @@
+mysql root password on VM06: mysql4vm06@sri
+mysql root password on VM06: mysql4vm05@sri
+
+database is called: onionfactory
+
+

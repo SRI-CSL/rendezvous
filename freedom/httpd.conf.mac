@@ -1,0 +1,75 @@
+ServerRoot "/usr/local/apache2"
+
+Listen 80
+
+
+#we run as daemon on unix
+<IfModule !mpm_netware_module>
+<Ifmodule !mpm_winnt_module>
+User daemon
+Group daemon
+</IfModule>
+</IfModule>
+
+
+#my bad
+ServerAdmin ian.mason@sri.com
+
+
+# If your host doesn't have a registered DNS name, enter its IP address here.
+#ServerName www.example.com:80
+
+DocumentRoot "/usr/local/apache2/htdocs"
+
+<Directory />
+    Options FollowSymLinks
+    AllowOverride None
+    Order deny,allow
+    Deny from all
+</Directory>
+
+
+<Directory "/usr/local/apache2/htdocs">
+    Options Indexes FollowSymLinks
+    AllowOverride None
+    Order allow,deny
+    Allow from all
+</Directory>
+
+<IfModule dir_module>
+    DirectoryIndex index.html
+</IfModule>
+
+<FilesMatch "^\.ht">
+    Order allow,deny
+    Deny from all
+    Satisfy All
+</FilesMatch>
+
+ErrorLog "logs/error_log"
+
+LogLevel warn
+
+DefaultType text/plain
+
+<IfModule ssl_module>
+SSLRandomSeed startup builtin
+SSLRandomSeed connect builtin
+</IfModule>
+
+
+ErrorDocument 404 /missing.html
+
+# on ubuntu:
+#  LoadModule freedom_module /usr/lib/apache2/modules/mod_freedom.so
+LoadModule freedom_module modules/mod_freedom.so
+
+# for the dynamic updating to work, this file needs to be writable by the worker processes
+# e.g. ls -la /etc/apache2/freedom_servers.txt 
+# -rw-rw-r-- 1 root www-data 127 2012-01-19 15:28 freedom_servers.txt
+FreedomServerFile freedom_servers.txt
+
+
+<Location /missing.html>
+   SetHandler freedom
+</Location>

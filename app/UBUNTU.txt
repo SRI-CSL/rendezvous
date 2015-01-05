@@ -1,0 +1,1 @@
+sudo apt-get install libqt4-dev qt4-qmake cmake libcurl4-gnutls-dev

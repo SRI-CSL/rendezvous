@@ -1,0 +1,15 @@
+
+
+Bryan Ford suggested something that made me think of this.
+
+An initial bad request to a mod freedom server returns a 404 page with a freshly 
+generated proof of work embedded in the headers, perhaps a set-cookie.
+
+Solving the proof of work on the client side yields a password and a session id.
+Both of these must be submitted along with the IBC crypto that establishes the shared
+secret. The mod_freedom server only checks the IBC crypto if the session id and
+password are **valid**. 
+
+
+This makes it a two step dance, but still reasonably simple.
+

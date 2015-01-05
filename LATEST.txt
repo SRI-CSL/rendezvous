@@ -1,0 +1,135 @@
+Executive Summary of Recent Changes
+ 
+
+0. Has anyone built the qt client and used it yet in DETER? It has prereqs:
+
+sudo apt-get install libqt4-dev qt4-qmake cmake libcurl4-gnutls-dev
+
+and is pretty easy to build and run. Though for the full dance it depends
+on stegotorus and Jeroen's aptly named dancer: acs-dancer
+
+
+1. mod_freedom and the qt app now make use of outguess. So the outguess that
+comes in the isc/rendezvous package should be built and installed (on both
+the client machine and the mod_freedom server):
+
+cd  isc/rendezvous/outguess
+./configure
+make
+sudo make install
+
+I have tweaked outguess to write to a log here: /tmp/outguess.log
+I'm in two minds about this.
+
+Either way you **should** notice that mod_freedom uses an additional
+httpd.conf directive for the directory that contains the cover images.
+The makefile makes this directory, and copies the images there (there are
+2 images currently in the repo).
+
+
+2. the thttpd code base is pre-patched and sits here:
+
+isc/rendezvous/thttpd
+
+it contains additional changes to allow for CGI children to inherit
+certain environment vars delineated in 
+
+isc/rendezvous/outguess/config.h
+
+as a result the onionfactory can be configured simply by setting the 
+appropriate environment variables (see 
+
+isc/rendezvous/ENVIRONMENT_VARIABLES
+
+for details), the important ones being:
+
+DEFIANT_CLASSPATH  and 
+
+DEFIANT_ONIONFACTORY_NET_URL
+
+whose values onion production depends crucially.
+
+3. Running the onionfactory
+
+The mod_freedom server still needs to have its keys manually added
+to the onionfactory's my_sql database. Since noone has complained I am assuming this is
+not a burden (yet).
+
+So assuming it has been so configured. Here are some hints.
+
+I always start and restart it using the script:
+
+~/OnionFactory/bin/restart_onionfactory.sh
+
+Note that we are *not* using a tor hidden service in DETER
+so it is OK when it says:
+  
+"Not restarting a tor proxy because I have no bridge address"
+
+Logs (we have so many logs, we must be expecting a cold winter, well Linda
+for sure): 
+
+thttpd: 
+
+it's access log is:
+
+~/OnionFactory/thttpd/log/thttpd.log
+
+it's error log is:
+
+/var/log/syslog
+
+the onion server's log is:
+
+~/OnionFactory/thttpd/log/onionserver.log
+
+and only gets written when a request comes in (i.e. a CGI child
+is born).
+
+
+4. Testing the Onionfactory Locally
+
+As part of the build there is an executable:
+
+
+isc/rendezvous/onionfactory/server/test_onion_server
+
+ ./test_onion_server 
+Usage: ./test_onion_server <private_key_file> <portno>
+
+so on VM06 I would do:
+
+./test_onion_server ../../client/data/vm06_private_key.bin 7777
+
+It should spit out a lot of stuff, and the 
+
+~/OnionFactory/thttpd/log/onionserver.log
+
+should also contain informative stuff.
+
+5. Testing it via mod_freedom
+
+If you have a mod_freedom correctly configured to hit the onion server
+up for onions, you can do the following:
+
+
+sudo rm /etc/apache2/mod_freedom_data/onions.bin
+
+then in isc/rendezvous/freedom/test
+
+use:
+
+ ./get_image.pl
+ Usage: ./get_image.pl <server> <imagefile>
+
+for example on vm06.csl.sri.com I do:
+
+/get_image.pl vm06.csl.sri.com dummy.jpg
+
+*watch apache's log (/var/log/apache2/error.log)  and the onionfactory log for
+commentary on this.
+
+
+Comments and questions should go to Ian.
+
+

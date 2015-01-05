@@ -1,0 +1,38 @@
+Source: saferdefiance
+Maintainer: Jeroen Massar <jeroen@isc.org>
+Section: web
+Priority: extra
+Standards-Version: 3.9.2
+Build-Depends: debhelper (>= 8.0.0~), libc6-dev, libc6-dev-i386 [amd64] | libc6-dev-amd64 [i386], libcurl4-openssl-dev, ant, openjdk-6-jdk, apache2-prefork-dev, libapr1-dev, libaprutil1, libaprutil1-dev, libtool, libwww-perl, libgmp-dev, libpbc-dev, cmake
+Homepage: http://www.safdef.isc.org
+
+#Package: saferdefiance-client
+#Architecture: any
+#Depends: ${shlibs:Depends}, ${misc:Depends}, saferdefiance-stegotorus
+#Description: SAFER DEFIANCE Client
+# The Defiant Client (QT App)
+
+Package: saferdefiance-mod-freedom
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, apache2-mpm-prefork, libpbc0
+Description: SAFER DEFIANCE mod_freedom
+ mod_freedom
+
+Package: saferdefiance-onion-factory
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ant, openjdk-6-jdk, libwww-perl, mysql-server, mysql-client, libpbc0
+Description: SAFER DEFIANCE Onion Factory
+ Onion Factory
+
+Package: saferdefiance-outguess
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: SAFER DEFIANCE Outguess
+ SAFER DEFIANCE modified version of Outguess
+
+Package: saferdefiance-wedge
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: SAFER DEFIANCE Wedge
+ The Wedge stego tool
+

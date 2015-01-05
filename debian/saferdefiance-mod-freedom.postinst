@@ -1,0 +1,24 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = configure ];
+then
+	# only enable on new installs, not on upgrades
+	if [ -z "$2" ];
+	then
+		# Create a new key
+		SHR=/usr/share/mod_freedom/
+		/usr/sbin/defiantpkg_generator ${SHR}/defiantmasterkey.bin `hostname` ${SHR}private_key.bin
+
+		# Enable the apache2 module
+		a2enmod -q freedom
+	fi
+
+	# only restart if mod_freedom is enabled
+	if [ -e /etc/apache2/mods-enabled/freedom.load ] ; then
+		invoke-rc.d apache2 restart
+	fi
+fi
+
+#DEBHELPER#

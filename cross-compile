@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# Our homedir, where 'rendezvous' lives
+CXHOME=$(pwd)
+CXCROSS=${HOME}/.cross
+CXMXE=${CXCROSS}/mxe/
+
+# Note that we use ${HOME}/.cross as that can be hardcoded in the .pro file etc
+
+echo "==================================================================================="
+echo "=== Cross-compiling Windows (win32) binary... sit back this will take some time ==="
+echo "==================================================================================="
+
+echo "=== Cross compiling Rendezvous client utilities"
+cd ${CXHOME}/client/src
+./cross-compile
+
+echo "=== Fetching MXE cross-compile environment"
+mkdir -p ${CXCROSS} 2>/dev/null || true
+cd ${CXCROSS}
+if [ ! -d mxe ];
+then
+	git clone https://github.com/mxe/mxe.git
+
+	echo "-- Disabling SSL2 in OpenSSL, so that QT (build after this) does not depend on it either"
+	sed -i 's/no-shared/no-shared no-ssl2/g' mxe/src/openssl.mk
+
+	echo "=== Creating cross-compiled QT (go make some freshly grounded coffee, grounding it yourself...)"
+	echo "(might need packages: cmake intltool scons yasm)"
+	cd ${CXMXE} && make qt
+fi
+
+echo "=== Cross compiling rendezvous App (QTapp)" 
+export PATH=${CXMXE}/usr/bin:$PATH
+
+cd ${CXHOME}/app/
+# Make sure we start over from scratch
+rm Makefile Makefile.Debug Makefile.Release 2>&1 || true
+${CXMXE}/usr/i686-pc-mingw32/qt/bin/qmake && make clean release-all
+
+# Return home
+cd ${CXHOME}
+
+# Outguess
+cd outguess
+./cross-compile
+mv outguess outguess.exe
+
+cd ${CXHOME}
+
+echo "=== Made it, we are done!"
+
+echo "QTapp can be found as:"
+file app/release/rendezvous.exe
+
+echo "outguess can be found as:"
+file outguess/outguess.exe
+

@@ -1,0 +1,21 @@
+Ian's Rendezvous playground.
+
+Stuff here is used in three different scenarios: 
+
+      1. The QT client (C++)
+      2. The apache module (C + apr)
+      3. The onionfactory (C + thttpd + mysql)
+
+defiantclient.[ch] is the main library; 
+
+kept simple to be included in qt apache and administration.
+no onions in it.
+
+onion.[ch] is the onion specific stuff
+
+defiantbf.[ch] is the implementation of BasicIdent of Boneh Franklin
+
+defiant[masterkey, params, pkg]_[info, generator].c  are part of the IBE toolchain
+as is 
+
+defiantparams_check.c

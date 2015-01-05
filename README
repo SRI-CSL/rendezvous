@@ -1,0 +1,11 @@
+
+./app  contains the qt rendevous app  (i.e. in the November 2011 PI meeting)
+
+./client contains the core C defiantclient library used by the app, freedom, and the onionfactory
+
+./freedom contains the apache module (currently running on vm06)
+
+./onionfactory contains the tor hidden service side of things
+
+Blame Ian (ian.mason@sri.com) for all code written here. 
+Also currently there are no copyrights anywhere.

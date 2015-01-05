@@ -1,0 +1,14 @@
+0. mod_freedom is configured  using the apache configuration file.
+
+1. onionfactory is configured by environment variables and mysql tweakage
+
+get_nep  will need to look up the NET server from: DEFIANT_ONIONFACTORY_NET_URL
+
+         if the environment variable is NULL we should fake a NET but be VERBOSE about it
+
+pack_nep will need to look up the class path from: DEFIANT_CLASSPATH
+
+         if the environment variable is NULL we should FAIL VERBOSELY
+
+
+
